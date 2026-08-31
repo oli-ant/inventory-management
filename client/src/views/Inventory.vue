@@ -38,12 +38,12 @@
             <thead>
               <tr>
                 <th>{{ t('inventory.table.sku') }}</th>
-                <th>{{ t('inventory.table.itemName') }}</th>
+                <th class="wrap">{{ t('inventory.table.itemName') }}</th>
                 <th>{{ t('inventory.table.category') }}</th>
-                <th>{{ t('inventory.table.quantityOnHand') }}</th>
-                <th>{{ t('inventory.table.reorderPoint') }}</th>
-                <th>{{ t('inventory.table.unitCost') }}</th>
-                <th>{{ t('inventory.table.totalValue') }}</th>
+                <th class="num">{{ t('inventory.table.quantityOnHand') }}</th>
+                <th class="num">{{ t('inventory.table.reorderPoint') }}</th>
+                <th class="num">{{ t('inventory.table.unitCost') }}</th>
+                <th class="num">{{ t('inventory.table.totalValue') }}</th>
                 <th>{{ t('inventory.table.location') }}</th>
                 <th>{{ t('inventory.table.status') }}</th>
               </tr>
@@ -56,12 +56,12 @@
                 @click="showItemDetail(item)"
               >
                 <td><strong>{{ item.sku }}</strong></td>
-                <td>{{ translateProductName(item.name) }}</td>
+                <td class="wrap">{{ translateProductName(item.name) }}</td>
                 <td>{{ translateCategory(item.category) }}</td>
-                <td><strong>{{ item.quantity_on_hand }}</strong></td>
-                <td>{{ item.reorder_point }}</td>
-                <td>{{ currencySymbol }}{{ item.unit_cost.toFixed(2) }}</td>
-                <td><strong>{{ currencySymbol }}{{ (item.quantity_on_hand * item.unit_cost).toLocaleString(undefined, {minimumFractionDigits: 2, maximumFractionDigits: 2}) }}</strong></td>
+                <td class="num"><strong>{{ item.quantity_on_hand }}</strong></td>
+                <td class="num">{{ item.reorder_point }}</td>
+                <td class="num">{{ currencySymbol }}{{ item.unit_cost.toFixed(2) }}</td>
+                <td class="num"><strong>{{ currencySymbol }}{{ (item.quantity_on_hand * item.unit_cost).toLocaleString(undefined, {minimumFractionDigits: 2, maximumFractionDigits: 2}) }}</strong></td>
                 <td>{{ translateWarehouse(item.location) }}</td>
                 <td>
                   <span :class="['badge', getStockStatusClass(item)]">
@@ -225,33 +225,14 @@ export default {
 </script>
 
 <style scoped>
-.page-header {
-  margin-bottom: 1.5rem;
-}
-
-.page-header h2 {
-  margin-bottom: 0.25rem;
-}
-
-.page-header p {
-  color: #64748b;
-  font-size: 0.875rem;
-}
-
+/*
+ * .page-header, .card-header, .card-title, .loading and .error are provided
+ * globally (see app-shell.md sec. 5 / App.vue) - only the search box and the
+ * clickable-row affordance are deliberate overrides that live here.
+ */
 .card-header {
-  display: flex;
-  justify-content: space-between;
-  align-items: center;
-  gap: 1.5rem;
-  padding: 1.25rem 1.5rem;
-  border-bottom: 1px solid #e2e8f0;
-}
-
-.card-title {
-  font-size: 1rem;
-  font-weight: 600;
-  color: #0f172a;
-  margin: 0;
+  flex-wrap: wrap;
+  gap: var(--space-3);
 }
 
 .search-box {
@@ -263,77 +244,68 @@ export default {
 
 .search-icon {
   position: absolute;
-  left: 0.75rem;
-  width: 18px;
-  height: 18px;
-  color: #94a3b8;
+  left: var(--space-3);
+  width: 16px;
+  height: 16px;
+  color: var(--color-text-faint);
   pointer-events: none;
 }
 
 .search-input {
   width: 100%;
-  padding: 0.5rem 2.5rem 0.5rem 2.5rem;
-  border: 1px solid #cbd5e1;
-  border-radius: 8px;
-  font-size: 0.875rem;
-  color: #0f172a;
-  background: #f8fafc;
-  transition: all 0.2s;
+  height: var(--control-height);
+  padding: 0 var(--space-8) 0 var(--space-8);
+  border: 1px solid var(--color-border-strong);
+  border-radius: var(--radius-md);
+  font-size: var(--text-sm);
+  color: var(--color-text-strong);
+  background: var(--color-surface);
+  transition: var(--transition-colors), box-shadow var(--duration-fast) var(--ease-standard);
 }
 
 .search-input:focus {
   outline: none;
-  border-color: #3b82f6;
-  background: white;
-  box-shadow: 0 0 0 3px rgba(59, 130, 246, 0.1);
+  border-color: var(--color-primary-soft);
+  background: var(--color-surface);
+  box-shadow: var(--focus-ring);
 }
 
 .search-input::placeholder {
-  color: #94a3b8;
+  color: var(--color-text-faint);
 }
 
 .clear-search {
   position: absolute;
-  right: 0.5rem;
+  right: var(--space-2);
   display: flex;
   align-items: center;
   justify-content: center;
-  padding: 0.25rem;
+  padding: var(--space-1);
   background: transparent;
   border: none;
-  border-radius: 4px;
-  color: #94a3b8;
+  border-radius: var(--radius-sm);
+  color: var(--color-text-faint);
   cursor: pointer;
-  transition: all 0.2s;
+  transition: var(--transition-colors);
 }
 
 .clear-search:hover {
-  background: #e2e8f0;
-  color: #64748b;
+  background: var(--color-border);
+  color: var(--color-text-muted);
 }
 
 .clear-search svg {
-  width: 18px;
-  height: 18px;
-}
-
-.loading,
-.error {
-  padding: 2rem;
-  text-align: center;
-  color: #64748b;
-}
-
-.error {
-  color: #ef4444;
+  width: 16px;
+  height: 16px;
 }
 
 .clickable-row {
   cursor: pointer;
-  transition: background-color 0.15s ease;
+  transition: var(--transition-colors);
 }
 
+/* !important preserved: overrides the global tbody tr:hover td background */
 .clickable-row:hover {
-  background: #eff6ff !important;
+  background: var(--color-primary-subtle) !important;
 }
 </style>

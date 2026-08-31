@@ -6,6 +6,12 @@ export default {
     orders: '注文',
     finance: '財務',
     demandForecast: '需要予測',
+    reports: 'レポート',
+    primary: 'メインナビゲーション',
+    collapse: 'サイドバーを折りたたむ',
+    expand: 'サイドバーを展開',
+    openMenu: 'メニューを開く',
+    closeMenu: 'メニューを閉じる',
     companyName: '触媒コンポーネンツ',
     subtitle: '在庫管理システム'
   },
@@ -195,7 +201,8 @@ export default {
     category: 'カテゴリ',
     orderStatus: '注文ステータス',
     all: 'すべて',
-    allMonths: 'すべての月'
+    allMonths: 'すべての月',
+    reset: 'すべてのフィルターをリセット'
   },
 
   // Statuses
