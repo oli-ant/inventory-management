@@ -19,46 +19,59 @@ The components use `<script setup>`. If the project uses `export default { setup
 ## 1. `src/composables/useAppShell.js`
 
 ```js
-import { ref, watch, onMounted, onBeforeUnmount } from 'vue'
+import { ref, computed, watch } from 'vue'
 import { useRoute } from 'vue-router'
 
 const STORAGE_KEY = 'app.sidebarCollapsed'
+// Between these widths the sidebar is always an icon rail; below the min it is an off-canvas drawer.
+const RAIL_QUERY = '(min-width: 768px) and (max-width: 1024px)'
 
-// Module-level refs so every component calling useAppShell() shares one state
-// (App.vue owns the layout classes, AppSidebar/AppTopbar toggle them).
-const collapsed = ref(false)
+// Module-level refs so every component calling useAppShell() shares one state:
+// App.vue owns the layout classes, AppSidebar/AppTopbar toggle them.
+const collapsed = ref(false)   // user's explicit preference (desktop > 1024px)
+const narrow = ref(false)      // viewport is in the forced-rail range
 const mobileOpen = ref(false)
 let initialised = false
 
-export function useAppShell() {
-  const route = useRoute()
+// What the layout should actually render: the user's choice on wide screens,
+// always the icon rail on narrow desktops/tablets. The toggle is hidden while forced.
+const rail = computed(() => collapsed.value || narrow.value)
+const railForced = computed(() => narrow.value)
 
+const toggleCollapsed = () => {
+  collapsed.value = !collapsed.value
+  localStorage.setItem(STORAGE_KEY, String(collapsed.value))
+}
+const openMobile = () => { mobileOpen.value = true }
+const closeMobile = () => { mobileOpen.value = false }
+
+export function useAppShell() {
+  // One-time wiring. Several components call useAppShell(); the listeners and
+  // watchers below are app-lifetime singletons, so they are registered only on
+  // the first call (App.vue's setup) instead of once per caller.
   if (!initialised) {
     initialised = true
-    // Persisted preference wins; otherwise start collapsed on narrow desktops
-    // (<=1024px) so content keeps room, expanded on wide screens.
-    const stored = localStorage.getItem(STORAGE_KEY)
-    collapsed.value = stored !== null
-      ? stored === 'true'
-      : window.matchMedia('(max-width: 1024px)').matches
+    collapsed.value = localStorage.getItem(STORAGE_KEY) === 'true'
+
+    // matchMedia listener keeps `narrow` in sync on resize/orientation change
+    // without a resize handler firing on every pixel.
+    const mql = window.matchMedia(RAIL_QUERY)
+    narrow.value = mql.matches
+    mql.addEventListener('change', (e) => { narrow.value = e.matches })
+
+    // Navigating from the drawer should close it; watching the route covers
+    // link clicks, programmatic pushes and browser back/forward alike.
+    // useRoute() needs a component setup context, which the first caller provides.
+    const route = useRoute()
+    watch(() => route.fullPath, closeMobile)
+
+    // Lock page scroll behind the open drawer so content doesn't move under the scrim.
+    watch(mobileOpen, (open) => { document.body.style.overflow = open ? 'hidden' : '' })
+
+    document.addEventListener('keydown', (e) => { if (e.key === 'Escape' && mobileOpen.value) closeMobile() })
   }
 
-  const toggleCollapsed = () => {
-    collapsed.value = !collapsed.value
-    localStorage.setItem(STORAGE_KEY, String(collapsed.value))
-  }
-  const openMobile = () => { mobileOpen.value = true }
-  const closeMobile = () => { mobileOpen.value = false }
-
-  // Navigating from the drawer should close it; watching the route covers
-  // link clicks, programmatic pushes and browser back/forward alike.
-  watch(() => route.fullPath, closeMobile)
-
-  const onKeydown = (e) => { if (e.key === 'Escape') closeMobile() }
-  onMounted(() => document.addEventListener('keydown', onKeydown))
-  onBeforeUnmount(() => document.removeEventListener('keydown', onKeydown))
-
-  return { collapsed, mobileOpen, toggleCollapsed, openMobile, closeMobile }
+  return { collapsed, rail, railForced, mobileOpen, toggleCollapsed, openMobile, closeMobile }
 }
 ```
 
@@ -68,7 +81,7 @@ export function useAppShell() {
 
 ```vue
 <template>
-  <aside class="app-sidebar" :class="{ collapsed }">
+  <aside class="app-sidebar" :class="{ collapsed: rail }">
     <div class="sidebar-brand">
       <!-- Monogram stays visible in the 64px rail; full name hides -->
       <span class="brand-mark" aria-hidden="true">{{ brandInitials }}</span>
@@ -94,7 +107,7 @@ export function useAppShell() {
             class="nav-item"
             :class="{ active: isActive(item.path) }"
             :aria-current="isActive(item.path) ? 'page' : undefined"
-            :title="collapsed ? t(item.labelKey) : undefined"
+            :title="rail ? t(item.labelKey) : undefined"
           >
             <svg class="nav-icon" viewBox="0 0 24 24" aria-hidden="true">
               <path v-for="d in icons[item.icon] || icons.dot" :key="d" :d="d" />
@@ -108,7 +121,9 @@ export function useAppShell() {
 
     <div class="sidebar-footer">
       <slot name="footer" />
+      <!-- Hidden while the viewport forces the rail (768-1024px): toggling would do nothing visible -->
       <button
+        v-if="!railForced"
         class="collapse-toggle"
         type="button"
         :aria-label="collapsed ? t('nav.expand') : t('nav.collapse')"
@@ -139,7 +154,7 @@ const props = defineProps({
 
 const { t } = useI18n()
 const route = useRoute()
-const { collapsed, toggleCollapsed, closeMobile } = useAppShell()
+const { collapsed, rail, railForced, toggleCollapsed, closeMobile } = useAppShell()
 
 const brandInitials = computed(() =>
   props.brandTitle.split(/\s+/).slice(0, 2).map(w => w[0]).join('').toUpperCase()
@@ -478,7 +493,7 @@ Template (keep every root-level modal and all existing `setup()` logic; only the
 
 ```vue
 <template>
-  <div class="app-shell" :class="{ 'sidebar-collapsed': collapsed, 'sidebar-open': mobileOpen }">
+  <div class="app-shell" :class="{ 'sidebar-collapsed': rail, 'sidebar-open': mobileOpen }">
     <AppSidebar
       :items="navItems"
       :brand-title="t('nav.companyName')"
@@ -526,7 +541,7 @@ const navItems = [
 
 // inside setup():
 const route = useRoute()
-const { collapsed, mobileOpen, closeMobile } = useAppShell()
+const { rail, mobileOpen, closeMobile } = useAppShell()
 // Longest matching prefix wins so nested routes (/orders/123) still resolve to "Orders".
 const currentTitle = computed(() => {
   const match = navItems
@@ -534,7 +549,7 @@ const currentTitle = computed(() => {
     .sort((a, b) => b.path.length - a.path.length)[0]
   return match ? t(match.labelKey) : ''
 })
-// return { ...existing, navItems, collapsed, mobileOpen, closeMobile, currentTitle }
+// return { ...existing, navItems, rail, mobileOpen, closeMobile, currentTitle }
 ```
 
 Global layout CSS (replaces `.app`, `.top-nav`, `.nav-container`, `.logo`, `.subtitle`, `.nav-tabs*`, `.main-content`):
@@ -601,10 +616,13 @@ body {
   display: flex;
   align-items: flex-end;
   justify-content: space-between;
-  gap: var(--space-4);
+  gap: var(--space-1) var(--space-4);
   flex-wrap: wrap;
   margin-bottom: var(--space-6);
 }
+/* Views that render bare <h2>/<p> children stack full-width; a view that wraps
+   title+desc in a div and adds an actions element still gets side-by-side. */
+.page-header > h2, .page-header > p { flex-basis: 100%; }
 .page-header h2 {
   font-size: var(--text-2xl);
   font-weight: var(--weight-bold);
@@ -678,18 +696,22 @@ thead th {
   text-transform: uppercase;
   letter-spacing: 0.04em;
   text-align: left;
-  padding: var(--space-3) var(--space-4);
+  padding: var(--space-3) var(--space-3);
   border-bottom: 1px solid var(--color-border);
-  white-space: nowrap;
+  white-space: normal;          /* headers may wrap to two lines so more columns fit beside the sidebar */
+  vertical-align: bottom;
+  line-height: 1.3;
 }
 thead th:first-child { border-top-left-radius: var(--radius-md); }
 thead th:last-child  { border-top-right-radius: var(--radius-md); }
 tbody td {
-  padding: var(--space-3) var(--space-4);
+  padding: var(--space-3) var(--space-3);
   border-bottom: 1px solid var(--color-border);
   color: var(--color-text);
   vertical-align: middle;
+  white-space: nowrap;          /* SaaS tables scroll inside .table-container rather than wrapping cells */
 }
+td.wrap, th.wrap { white-space: normal; min-width: 220px; }   /* opt-in for long free-text columns */
 tbody tr:last-child td { border-bottom: 0; }
 tbody tr:hover td { background: var(--color-bg-subtle); }
 td.num, th.num { text-align: right; font-variant-numeric: tabular-nums; }
@@ -723,6 +745,12 @@ td.num, th.num { text-align: right; font-variant-numeric: tabular-nums; }
   font: inherit;
   font-size: var(--text-sm);
   transition: var(--transition-colors), box-shadow var(--duration-fast) var(--ease-standard);
+}
+select {
+  appearance: none; -webkit-appearance: none; padding-right: var(--space-8); cursor: pointer;
+  /* chevron colour mirrors --slate-500; CSS vars cannot be used inside a data URI */
+  background-image: url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 24 24' fill='none' stroke='%2364748b' stroke-width='2' stroke-linecap='round' stroke-linejoin='round'%3E%3Cpath d='m6 9 6 6 6-6'/%3E%3C/svg%3E");
+  background-repeat: no-repeat; background-position: right var(--space-3) center; background-size: 16px;
 }
 select:hover, input:hover { border-color: var(--slate-400); }
 select:focus, input:focus, .btn:focus-visible { outline: none; border-color: var(--color-primary-soft); box-shadow: var(--focus-ring); }
@@ -786,8 +814,16 @@ If modal components carry their own scoped copies of these rules, delete the sco
   padding: 0 var(--content-padding-x);
   display: flex;
   align-items: center;
-  gap: var(--space-4);
+  gap: var(--space-2) var(--space-4);
   flex-wrap: wrap;
+}
+.filters-grid { display: flex; align-items: center; gap: var(--space-2) var(--space-4); flex-wrap: wrap; flex: 1; }
+@media (max-width: 1024px) { .filter-select { min-width: 120px; } }
+@media (max-width: 767.98px) {
+  /* Two-column grid with stacked labels so the bar never overflows on phones */
+  .filters-grid { display: grid; grid-template-columns: 1fr 1fr; gap: var(--space-2) var(--space-3); }
+  .filter-group { flex-direction: column; align-items: stretch; }
+  .filter-select { width: 100%; min-width: 0; }
 }
 .filter-group label {
   font-size: var(--text-xs);
@@ -822,6 +858,7 @@ Dropdown menus that moved into the topbar (profile, language):
 
 - **Router with named routes / meta**: prefer `meta: { navKey, icon }` on the route records and build `navItems` from `router.getRoutes()` filtered by `meta.navKey`, so nav and router cannot drift.
 - **vue-i18n instead of a custom composable**: swap `useI18n` import for `import { useI18n } from 'vue-i18n'`; keys stay the same.
+- **Grids that hold tables**: use `grid-template-columns: repeat(N, minmax(0, 1fr))` and `min-width: 0` on the card, otherwise a `nowrap` table's min-content width pushes the card past the viewport.
 - **No global filter bar**: drop `<FilterBar/>` and section 6; nothing else changes.
 - **Secondary nav sections** (e.g. "Settings", "Admin"): give `navItems` entries a `section` field and render one `<ul>` per section with a `.nav-section-label` (`--text-xs`, uppercase, `--sidebar-muted`, `padding: var(--space-4) var(--space-3) var(--space-2)`), hidden when collapsed.
 - **Pinia/Vuex present**: `useAppShell` can live in the store instead; keep the localStorage persistence and the route watcher.

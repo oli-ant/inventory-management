@@ -1,0 +1,163 @@
+/*
+ * Design tokens for the SaaS redesign.
+ * Install as src/assets/tokens.css and import it FIRST in src/main.js.
+ * Component and global styles reference these via var(--token); do not
+ * introduce raw hex colors, off-scale spacing, or ad-hoc z-index values.
+ */
+:root {
+  /* ---- Neutral palette (Tailwind slate, matches existing design system) ---- */
+  --slate-50:  #f8fafc;
+  --slate-100: #f1f5f9;
+  --slate-200: #e2e8f0;
+  --slate-300: #cbd5e1;
+  --slate-400: #94a3b8;
+  --slate-500: #64748b;
+  --slate-600: #475569;
+  --slate-700: #334155;
+  --slate-800: #1e293b;
+  --slate-900: #0f172a;
+
+  /* ---- Brand / primary ---- */
+  --color-primary:        #2563eb;
+  --color-primary-hover:  #1d4ed8;
+  --color-primary-soft:   #3b82f6;
+  --color-primary-subtle: #eff6ff;
+  --color-primary-muted:  #dbeafe;
+  --color-on-primary:     #ffffff;
+
+  /* ---- Semantic status (keep green/blue/yellow/red meaning) ---- */
+  --color-success:        #059669;
+  --color-success-subtle: #ecfdf5;
+  --color-info:           #2563eb;
+  --color-info-subtle:    #eff6ff;
+  --color-warning:        #ea580c;
+  --color-warning-subtle: #fff7ed;
+  --color-caution:        #ca8a04;   /* yellow badges */
+  --color-caution-subtle: #fefce8;
+  --color-danger:         #dc2626;
+  --color-danger-subtle:  #fef2f2;
+
+  /* ---- Surface aliases (use these, not the raw slate values, in components) ---- */
+  --color-bg:            var(--slate-50);   /* app canvas */
+  --color-bg-subtle:     var(--slate-100);  /* table headers, hovers, icon rail hover */
+  --color-surface:       #ffffff;           /* cards, topbar, sidebar (light variant) */
+  --color-border:        var(--slate-200);
+  --color-border-strong: var(--slate-300);  /* form controls */
+  --color-text:          var(--slate-800);
+  --color-text-strong:   var(--slate-900);  /* headings, active labels */
+  --color-text-muted:    var(--slate-500);  /* descriptions, table header labels */
+  --color-text-faint:    var(--slate-400);  /* placeholders, disabled */
+
+  /* ---- Sidebar (light variant = default) ---- */
+  --sidebar-bg:            var(--color-surface);
+  --sidebar-border:        var(--color-border);
+  --sidebar-text:          var(--slate-600);
+  --sidebar-text-hover:    var(--slate-900);
+  --sidebar-item-hover-bg: var(--slate-100);
+  --sidebar-active-bg:     var(--color-primary-subtle);
+  --sidebar-active-text:   var(--color-primary);
+  --sidebar-active-bar:    var(--color-primary);
+  --sidebar-brand-text:    var(--slate-900);
+  --sidebar-muted:         var(--slate-400);
+  /* Dark variant: override the block above with
+     --sidebar-bg: var(--slate-900); --sidebar-border: var(--slate-800);
+     --sidebar-text: var(--slate-300); --sidebar-text-hover: #fff;
+     --sidebar-item-hover-bg: var(--slate-800); --sidebar-active-bg: rgba(59,130,246,.16);
+     --sidebar-active-text: #fff; --sidebar-active-bar: var(--color-primary-soft);
+     --sidebar-brand-text: #fff; --sidebar-muted: var(--slate-500); */
+
+  /* ---- Spacing scale (4px base). Only these values for margin/padding/gap ---- */
+  --space-0:  0;
+  --space-1:  0.25rem;  /* 4  */
+  --space-2:  0.5rem;   /* 8  */
+  --space-3:  0.75rem;  /* 12 */
+  --space-4:  1rem;     /* 16 */
+  --space-5:  1.25rem;  /* 20 */
+  --space-6:  1.5rem;   /* 24 */
+  --space-8:  2rem;     /* 32 */
+  --space-10: 2.5rem;   /* 40 */
+  --space-12: 3rem;     /* 48 */
+
+  /* ---- Radius ---- */
+  --radius-sm:   6px;   /* badges-rect, small chips */
+  --radius-md:   8px;   /* inputs, buttons, nav items */
+  --radius-lg:   12px;  /* cards */
+  --radius-xl:   16px;  /* modals */
+  --radius-full: 9999px;
+
+  /* ---- Elevation ---- */
+  --shadow-xs: 0 1px 2px 0 rgba(15, 23, 42, 0.04);
+  --shadow-sm: 0 1px 3px 0 rgba(15, 23, 42, 0.06), 0 1px 2px -1px rgba(15, 23, 42, 0.06);
+  --shadow-md: 0 4px 12px -2px rgba(15, 23, 42, 0.08), 0 2px 6px -2px rgba(15, 23, 42, 0.06);
+  --shadow-lg: 0 20px 40px -12px rgba(15, 23, 42, 0.18), 0 8px 16px -8px rgba(15, 23, 42, 0.10);
+  --focus-ring: 0 0 0 3px rgba(59, 130, 246, 0.25);
+
+  /* ---- Typography ---- */
+  --font-sans: 'Inter', -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, Oxygen, Ubuntu, Cantarell, sans-serif;
+  --font-mono: ui-monospace, SFMono-Regular, Menlo, Consolas, monospace;
+  --text-xs:   0.75rem;   /* 12 table headers, badges */
+  --text-sm:   0.8125rem; /* 13 secondary, filters */
+  --text-base: 0.875rem;  /* 14 body, nav labels, table cells */
+  --text-md:   0.9375rem; /* 15 */
+  --text-lg:   1.125rem;  /* 18 card titles */
+  --text-xl:   1.25rem;   /* 20 topbar title */
+  --text-2xl:  1.5rem;    /* 24 page title */
+  --text-3xl:  1.875rem;  /* 30 big KPI numbers */
+  --weight-regular: 400;
+  --weight-medium:  500;
+  --weight-semibold: 600;
+  --weight-bold:    700;
+  --tracking-tight: -0.02em;
+  --leading-tight: 1.25;
+  --leading-normal: 1.5;
+
+  /* ---- Layout ---- */
+  --sidebar-width:            240px;
+  --sidebar-width-collapsed:  64px;
+  --sidebar-current-width:    var(--sidebar-width); /* flipped by .sidebar-collapsed on .app-shell */
+  --topbar-height:            56px;
+  --content-max-width:        1600px;
+  --content-padding-x:        var(--space-8);
+  --content-padding-y:        var(--space-6);
+  --content-padding:          var(--content-padding-y) var(--content-padding-x);
+  --control-height:           36px;  /* inputs, selects, buttons */
+  --nav-item-height:          40px;
+
+  /* ---- Z-index scale (only these) ---- */
+  --z-base:      1;
+  --z-filterbar: 20;
+  --z-topbar:    30;
+  --z-sidebar:   40;
+  --z-dropdown:  50;
+  --z-overlay:   90;   /* mobile drawer scrim, modal scrim */
+  --z-modal:     100;
+  --z-toast:     110;
+
+  /* ---- Motion ---- */
+  --ease-standard: cubic-bezier(0.2, 0, 0, 1);
+  --duration-fast: 120ms;
+  --duration-base: 200ms;
+  --transition-colors: color var(--duration-fast) var(--ease-standard),
+                       background-color var(--duration-fast) var(--ease-standard),
+                       border-color var(--duration-fast) var(--ease-standard);
+}
+
+@media (max-width: 1024px) {
+  :root {
+    --content-padding-x: var(--space-6);
+  }
+}
+
+@media (max-width: 768px) {
+  :root {
+    --content-padding-x: var(--space-4);
+    --content-padding-y: var(--space-4);
+  }
+}
+
+@media (prefers-reduced-motion: reduce) {
+  :root {
+    --duration-fast: 0ms;
+    --duration-base: 0ms;
+  }
+}

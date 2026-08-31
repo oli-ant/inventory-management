@@ -135,6 +135,23 @@ Run the **code-reviewer** subagent on the diff; fix what it finds. Then summariz
 9. **Comment non-obvious logic** at the point of change (localStorage persistence, the sticky offset variable, why the overlay is a sibling of the sidebar, route-matching rule for nested paths).
 10. Frontend only — never touch `server/`, data files, or API contracts.
 
+## Lessons Learned (pitfalls seen when this skill was first run)
+
+Bake these into the delegation prompts; each one cost a fix-up round the first time.
+
+- **Ship the global form-control rules with the shell.** If `select`/`input`/`.btn` rules from `app-shell.md` §5 are left out of the global block, every filter select renders as a bare native control. Include them in the Step 2 prompt explicitly.
+- **`.page-header` children vary.** Some views render `<div class="page-header"><h2/><p/></div>` (bare children), others wrap title+desc and add actions. Use `flex-wrap` + `.page-header > h2, .page-header > p { flex-basis: 100% }` so both layouts work.
+- **Grids that contain tables need `minmax(0, 1fr)` and `min-width: 0` on the card.** Bare `1fr` tracks take the table's min-content width, so a `nowrap` table blows the card past the viewport even though `.table-container` has `overflow-x: auto`.
+- **Table density after losing 240px.** `td { white-space: nowrap }` + `th { white-space: normal }` (headers may wrap to two lines) keeps key columns visible at 1440 without horizontal scroll; offer `td.wrap` as an opt-in for long free-text columns and `.num` for right-aligned figures.
+- **Reducing `auto-fit` minimums.** KPI/stat grids sized for a full-width layout (e.g. `minmax(220px,1fr)` × 5) leave an orphan card once the sidebar eats 240px; drop the minimum (180px) or the check will only show up in screenshots.
+- **Forced icon rail is a viewport rule, not a preference.** `useAppShell` exposes `rail` (= user-collapsed OR 768–1024px) and `railForced`; bind layout classes to `rail`, hide the toggle while forced, persist only the user preference.
+- **Register shell listeners once.** `useAppShell()` is called by App, Sidebar and Topbar; route watcher, Escape handler, matchMedia listener and body scroll-lock belong inside the one-time init block, not per caller.
+- **Filter bar must wrap.** Give `.filters-container`/`.filters-grid` `flex-wrap: wrap`, shrink select min-width at <=1024, and switch to a 2-column grid with stacked labels at <768; otherwise it is the first thing to overflow.
+- **Polish agents delete "dead" CSS that isn't dead.** Tell them to grep the template for every class before removing a rule (a donut legend swatch lost its size that way).
+- **Hardcoded `aria-label="Close"` sneaks in.** Remind modal polish prompts that aria-labels go through `t()` too.
+- **Headless screenshot artifact:** with the mobile drawer open, Playwright screenshots can show sticky topbar/filter bar undimmed under the rgba scrim even though `elementFromPoint` confirms the scrim covers them (an opaque test colour proves coverage). Verify with hit-testing before "fixing" stacking.
+- **Playwright snapshots are huge on table pages.** Delegate screenshot sweeps to a subagent and have it move files to the scratch directory; keep the main context for decisions.
+
 ## Example Target: this repository (inventory-management)
 
 Facts gathered so the audit is instant here; re-verify line numbers before editing.
